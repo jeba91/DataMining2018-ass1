@@ -21,7 +21,7 @@ class helper_functions:
         data_id = dataset.loc[dataset['id'] == id]
 
         #Convert dates to ordinal system
-        dataset['ordinal'] = [x.toordinal() for x in data_id['time'].dt.date.tolist()]
+        data_id['ordinal'] = [x.toordinal() for x in data_id['time'].dt.date.tolist()]
 
         #Get a list with unique sorted ordinal dates
         ordinal = sorted(data_id['ordinal'].unique().tolist())
@@ -76,3 +76,5 @@ id_person = data_all['id'].unique().tolist()
 df_person = help_func.create_person_df(data_all, 'AS14.31', variables)
 
 df_person['mood'] = df_person.apply(lambda x: x['mood'] if np.isnan(x['mood']) is False else 0, axis=1)
+
+print(df_person['mood'])
