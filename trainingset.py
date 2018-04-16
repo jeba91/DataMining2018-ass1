@@ -149,18 +149,20 @@ X = np.add(X,10)
 # print(Y)
 # print(variables)
 
-# feature extraction
-test = SelectKBest(score_func=chi2, k=4)
-fit = test.fit(X, Y)
-# summarize scores
-numpy.set_printoptions(precision=3)
-scores = fit.scores_
+print(total_data)
 
-#voor elke variabele print de score
-for s in range(len(scores)):
-    print(variables[s], '=', scores[s])
-features = fit.transform(X)
-
-#check de link in app, iets met score per feature ofzo
-# summarize selected features
-print(features[0:5,:])
+# # feature extraction
+# test = SelectKBest(score_func=chi2, k=4)
+# fit = test.fit(X, Y)
+# # summarize scores
+# numpy.set_printoptions(precision=3)
+# scores = fit.scores_
+#
+# #voor elke variabele print de score
+# for s in range(len(scores)):
+#     print(variables[s], '=', scores[s])
+# features = fit.transform(X)
+#
+# #check de link in app, iets met score per feature ofzo
+# # summarize selected features
+# print(features[0:5,:])
