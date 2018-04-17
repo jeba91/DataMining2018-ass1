@@ -6,9 +6,12 @@ import math
 import pandas
 import pandas as pd
 import datetime as dt
+import seaborn as sns
 from pandas import DataFrame
 from datetime import datetime
 import numpy
+
+from sklearn import preprocessing
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
@@ -55,6 +58,28 @@ class helper_functions:
 
         return person
 
+    def find_series(self, dataset):
+        nan = 0
+        start = 0
+        series = []
+
+        max_index = max(list(dataset.index.values))
+
+        for index,row in dataset.iterrows():
+            if index == max_index and start != 0:
+                series.append([start,index,index-start])
+            elif math.isnan(row['mood']):
+                nan += 1
+                if nan > 3 and start != 0:
+                    series.append([start,index,index-start])
+                    start = 0
+            else:
+                nan = 0
+                if start == 0:
+                    start = index
+
+        return series
+
 
 
 #create parses for formatted date data
@@ -73,8 +98,58 @@ variables = data_all['variable'].unique().tolist()
 # get a list of unique ID's
 id_person = data_all['id'].unique().tolist()
 
-df_person = help_func.create_person_df(data_all, 'AS14.31', variables)
+total_series = []
 
-df_person['mood'] = df_person.apply(lambda x: x['mood'] if np.isnan(x['mood']) is False else 0, axis=1)
+for id in id_person:
+    df_person = help_func.create_person_df(data_all, id, variables)
+    series = help_func.find_series(df_person)
+    for s in series:
+        total_series.append([id, s])
 
-print(df_person['mood'])
+
+
+serie_use = total_series[0][1]
+
+df_person = help_func.create_person_df(data_all, id_person[0], variables)
+data_used = range(serie_use[0],serie_use[1],1)
+df_person = df_person.loc[data_used]
+df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
+df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
+
+training_data = df_person
+
+for serie in total_series:
+    if serie == serie_use:
+        break
+    df_person = help_func.create_person_df(data_all, serie[0], variables)
+    data_used = range(serie[1][0],serie[1][1],1)
+    df_person = df_person.loc[data_used]
+    df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
+    df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
+    training_data =  pd.concat([training_data, df_person])
+
+print(training_data)
+
+# #for subplots
+# fig, axes = plt.subplots(4,5, sharey=True )
+# a = 0
+# b = 0
+#
+# #scatter plot totalbsmtsf/saleprice
+# for var in variables:
+#     data = pd.concat([training_data['mood'], training_data[var]], axis=1)
+#     data.plot.scatter(ax=axes[a,b], x=var, y='mood'); axes[a,b].set_title(var)
+#     a = a+1
+#     if a == 4:
+#         b = b+1
+#         a = 0
+#
+# plt.show()
+
+# #correlation matrix
+# corrmat = training_data.corr()
+# f, ax = plt.subplots(figsize=(12, 9))
+# sns.heatmap(corrmat, vmax=.8, square=True);
+# plt.xticks(rotation=90)
+# plt.yticks(rotation=-180)
+# plt.show()
