@@ -33,8 +33,6 @@ variables = data_all['variable'].unique().tolist()
 # get a list of unique ID's
 id_person = data_all['id'].unique().tolist()
 
-print(data_all)
-
 #remove outliers from selected variables
 outlier_variables = [variables[i] for i in [4,7,8,9,12,14,15]]
 for var in outlier_variables:
@@ -43,6 +41,7 @@ for var in outlier_variables:
     data_all = data_all.drop(df.index.values)
 
 #remove values smaller than zero from selected variables
+min_variables = [variables[i] for i in [7,9]]
 for var in min_variables:
     df = data_all.loc[data_all.variable == var]
     df = df[df.value < 0]
@@ -59,3 +58,6 @@ for var in variables:
     data_var = data_all.loc[data_all.variable == var]
     print(data_var.describe().to_csv(index=False))
     print(data_var.groupby(data_var.index.date).count().describe())
+
+#save data to pickle file
+data_all.to_pickle('preprocessed.pkl')

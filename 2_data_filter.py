@@ -19,7 +19,10 @@ from sklearn.linear_model import LogisticRegression
 
 # Functions for data analysis and data cleaning/interpolation
 class helper_functions:
+    #Function to find data from ID formatted
     def create_person_df(self, dataset, id, variables):
+        #variables to sum instead of mean
+        sum_var = [variables[i] for i in [5,6]]
         #Get data from 1 ID
         data_id = dataset.loc[dataset['id'] == id]
 
@@ -43,21 +46,26 @@ class helper_functions:
             data_ord = data_id.loc[data_id.ordinal == ord]
             means_ord = []
             #loop through all variables
+
             for v in variables:
                 #Get the mean for every value of one day
                 data_v = data_ord.loc[data_ord.variable == v]
                 #Add mean to list
-                means_ord.append(np.mean(data_v['value'].values))
+                if v in sum_var:
+                    means_ord.append(np.sum(data_v['value'].values))
+                else:
+                    means_ord.append(np.mean(data_v['value'].values))
             #Add all means as list to total data
             total_data.append(means_ord)
 
         #Create dataframe with data per day
-        person = pd.DataFrame(data=np.array(total_data),    # values
-                              index=ordinal,                # Index are the ordinals
-                              columns=variables)            # columns are the variable names
+        person = pd.DataFrame(data=np.array(total_data),        # values
+                              index=ordinal,                    # Index are the ordinals
+                              columns=variables) # columns are the variable names
 
         return person
 
+    #Function to find serie of values with <3 NaNs
     def find_series(self, dataset):
         nan = 0
         start = 0
@@ -81,17 +89,8 @@ class helper_functions:
         return series
 
 
-
-#create parses for formatted date data
-dateparse = lambda dates: pd.datetime.strptime(dates, '%Y-%m-%d %H:%M:%S.%f')
 help_func = helper_functions()
-
-#Load the dataset from CSV
-try:
-    data_all = pd.read_csv("dataset_mood_smartphone.csv", index_col=0, parse_dates=['time'], header=0, date_parser=dateparse)
-except IOError as e:
-    print('File not found!')
-    raise e
+data_all = pd.read_pickle('preprocessed.pkl')
 
 # get a list of unique variable names
 variables = data_all['variable'].unique().tolist()
@@ -100,36 +99,37 @@ id_person = data_all['id'].unique().tolist()
 
 total_series = []
 
-print(data_all.loc[data_all.variable == 'mood'].describe())
-
+#create series from each ID and total list
 for id in id_person:
     df_person = help_func.create_person_df(data_all, id, variables)
     series = help_func.find_series(df_person)
     for s in series:
         total_series.append([id, s])
 
-
-
+#retrieve first serie
 serie_use = total_series[0][1]
-
 df_person = help_func.create_person_df(data_all, id_person[0], variables)
-data_used = range(serie_use[0],serie_use[1],1)
-df_person = df_person.loc[data_used]
+df_person = df_person.loc[range(serie_use[0],serie_use[1],1)]
 df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
 df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
 
+#make first serie training data
+df_person['id'] = id_person[0]
 training_data = df_person
 
+#append rest of the series
 for serie in total_series:
     if serie == serie_use:
         print("skip eerste")
         break
     df_person = help_func.create_person_df(data_all, serie[0], variables)
-    data_used = range(serie[1][0],serie[1][1],1)
-    df_person = df_person.loc[data_used]
+    df_person = df_person.loc[range(serie[1][0],serie[1][1],1)]
     df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
     df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
+    df_person['id'] = serie[0]
     training_data =  pd.concat([training_data, df_person])
+
+print(training_data)
 
 # #for subplots
 # fig, axes = plt.subplots(4,5, sharey=True )
@@ -147,10 +147,14 @@ for serie in total_series:
 #
 # plt.show()
 
-#correlation matrix
-corrmat = training_data.corr()
-f, ax = plt.subplots(figsize=(12, 9))
-sns.heatmap(corrmat, vmax=.8, square=True);
-plt.xticks(rotation=90)
-plt.yticks(rotation=-180)
-plt.show()
+# #correlation matrix
+# corrmat = training_data.corr()
+# f, ax = plt.subplots(figsize=(12, 9))
+# sns.heatmap(corrmat, vmax=.8, square=True);
+# plt.xticks(rotation=90)
+# plt.yticks(rotation=-180)
+# plt.show()
+
+
+#save data to pickle file
+training_data.to_pickle('train_set.pkl')
