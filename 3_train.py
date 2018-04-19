@@ -21,35 +21,48 @@ from sklearn.linear_model import LogisticRegression
 data_all = pd.read_pickle('train_set.pkl')
 data_all['ordinal'] = data_all.index.values
 
-#Get data from 1 ID
-data_id = data_all.loc[data_all['id'] == 'AS14.01']
+# get a list of unique ID's
+id_person = data_all['id'].unique().tolist()
 
 # sort the dataframe by variables
-data_id.sort_values(by=['id'])
+data_all.sort_values(by=['id'])
 # set the index to be this and don't drop
-data_id.set_index(keys=['id'], drop=False, inplace=True)
+data_all.set_index(keys=['id'], drop=False, inplace=True)
 
-#Get a list with unique sorted ordinal dates
-ordinal = sorted(data_id['ordinal'].unique().tolist())
+names = data_all.columns.values.tolist()
+total_names = []
+for i in range(5):
+    total_names.extend(names)
+total_names.extend(['mood_predict'])
 
-print(data_id)
+train_set = pd.DataFrame(columns=total_names) # columns are the variable names
 
-train_set_week = pd.DataFrame()
+for id in id_person:
+    #Get data from 1 ID
+    data_id = data_all.loc[data_all['id'] == id]
 
-for j in ordinal:
-    days = [5,4,3,2,1,0]
-    past = [j-i for i in days]
-    past_in_ordinal = [x for x in past if x in ordinal]
-    if len(past_in_ordinal) == 6:
-        week = []
-        for p in past:
-            week.append(data_id.loc[data_id['ordinal'] == p])
-        train_set_week.append(week)
+    #Get a list with unique sorted ordinal dates
+    ordinal = sorted(data_id['ordinal'].unique().tolist())
 
-print(train_set_week)
+    train_set_week = []
 
-# #Loop through all unique ordinals
-# for ord in ordinal:
-#     #Get only data for one ordinal
-#     data_ord = data_id.loc[data_id.ordinal == ord].values
-#     print(data_ord)
+    for j in ordinal:
+        days = [5,4,3,2,1,0]
+        past = [j-i for i in days]
+        past_in_ordinal = [x for x in past if x in ordinal]
+        if len(past_in_ordinal) == 6:
+            week = []
+            for p in past:
+                if p != past[-1]:
+                    data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
+                    week.extend(data_p[0])
+                else:
+                    week.extend([8])
+            train_set_week.append(week)
+
+    train_ord = pd.DataFrame(np.array(train_set_week),
+                             columns=total_names) # columns are the variable names
+
+    train_set = train_set.append(train_ord, ignore_index=True)
+
+print(train_set)
