@@ -8,6 +8,8 @@ import pandas as pd
 import datetime as dt
 import seaborn as sns
 from pandas import DataFrame
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from datetime import datetime
 import numpy
 
@@ -65,4 +67,7 @@ for id in id_person:
 
     train_set = train_set.append(train_ord, ignore_index=True)
 
-print(train_set['weather'].describe())
+train_set = shuffle(train_set)
+training_set, testing_set = train_test_split(train_set, test_size=0.2)
+
+print(training_set)
