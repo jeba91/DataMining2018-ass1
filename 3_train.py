@@ -65,4 +65,4 @@ for id in id_person:
 
     train_set = train_set.append(train_ord, ignore_index=True)
 
-print(train_set)
+print(train_set['weather'].describe())
