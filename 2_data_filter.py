@@ -8,7 +8,7 @@ import pandas as pd
 import datetime as dt
 import seaborn as sns
 from pandas import DataFrame
-from datetime import datetime
+from datetime import datetime as dt
 import numpy
 
 from sklearn import preprocessing
@@ -127,7 +127,7 @@ for serie in total_series:
     df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
     df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
     df_person['id'] = serie[0]
-    training_data =  pd.concat([training_data, df_person])
+    training_data = pd.concat([training_data, df_person])
 
 print(training_data)
 
@@ -154,7 +154,6 @@ sns.heatmap(corrmat, vmax=.8, square=True);
 plt.xticks(rotation='vertical')
 plt.yticks(rotation='horizontal')
 plt.show()
-
 
 #save data to pickle file
 training_data.to_pickle('train_set.pkl')
