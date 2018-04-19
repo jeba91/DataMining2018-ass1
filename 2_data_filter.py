@@ -94,6 +94,8 @@ data_all = pd.read_pickle('preprocessed.pkl')
 
 # get a list of unique variable names
 variables = data_all['variable'].unique().tolist()
+variables = [variables[i] for i in [0,1,2,3,4,5,6,8,9,10,11,12,14,15,18]]
+
 # get a list of unique ID's
 id_person = data_all['id'].unique().tolist()
 

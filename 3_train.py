@@ -16,10 +16,6 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
-from sklearn.utils import shuffle
-from sklearn.model_selection import train_test_split
-import pylab as plt
-from matplotlib_venn import venn2, venn3_circles
 
 
 data_all = pd.read_pickle('train_set.pkl')
@@ -69,9 +65,4 @@ for id in id_person:
 
     train_set = train_set.append(train_ord, ignore_index=True)
 
-train_set = shuffle(train_set)
-
-training_set, testing_set = train_test_split(train_set, test_size=0.2)
-
-training_set.to_pickle('training_set.pkl')
-testing_set.to_pickle('testing_set.pkl')
+print(train_set['weather'].describe())
