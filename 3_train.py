@@ -32,7 +32,7 @@ data_all.set_index(keys=['id'], drop=False, inplace=True)
 names = data_all.columns.values.tolist()
 total_names = []
 for i in range(5):
-    total_names.extend(names)
+    total_names.extend(names[0:15])
 total_names.extend(['mood_predict'])
 
 train_set = pd.DataFrame(columns=total_names) # columns are the variable names
@@ -55,9 +55,10 @@ for id in id_person:
             for p in past:
                 if p != past[-1]:
                     data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
-                    week.extend(data_p[0])
+                    week.extend(data_p[0][0:15])
                 else:
-                    week.extend([8])
+                    data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
+                    week.extend([data_p[0][0]])
             train_set_week.append(week)
 
     train_ord = pd.DataFrame(np.array(train_set_week),
@@ -65,4 +66,18 @@ for id in id_person:
 
     train_set = train_set.append(train_ord, ignore_index=True)
 
-print(train_set['weather'].describe())
+train_set = shuffle(train_set)
+training_set, testing_set = train_test_split(train_set, test_size=0.2)
+
+array = train_set.values
+
+X = array[:,0:19]
+Y = array[:,19]
+np.delete(X, 0, [15])
+print tabulate(X, tablefmt="plain")
+
+pca = PCA(n_components=3)
+fit = pca.fit(X)
+
+# print("Explained Variance: %s") % fit.explained_variance_ratio_
+# print(fit.components_)
