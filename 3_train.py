@@ -8,6 +8,8 @@ import pandas as pd
 import datetime as dt
 import seaborn as sns
 from pandas import DataFrame
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
 from datetime import datetime
 import numpy
 
@@ -57,7 +59,6 @@ for id in id_person:
                     data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
                     week.extend(data_p[0][0:15])
                 else:
-                    data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
                     week.extend([data_p[0][0]])
             train_set_week.append(week)
 
@@ -69,15 +70,4 @@ for id in id_person:
 train_set = shuffle(train_set)
 training_set, testing_set = train_test_split(train_set, test_size=0.2)
 
-array = train_set.values
-
-X = array[:,0:19]
-Y = array[:,19]
-np.delete(X, 0, [15])
-print tabulate(X, tablefmt="plain")
-
-pca = PCA(n_components=3)
-fit = pca.fit(X)
-
-# print("Explained Variance: %s") % fit.explained_variance_ratio_
-# print(fit.components_)
+print(training_set)
