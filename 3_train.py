@@ -74,8 +74,8 @@ array = train_set.values
 
 X = array[:,0:19]
 Y = array[:,19]
-np.delete(X, 0, [15])
-print tabulate(X, tablefmt="plain")
+# np.delete(X, 0, [15])
+print(tabulate(X, tablefmt="plain"))
 
 pca = PCA(n_components=3)
 fit = pca.fit(X)
