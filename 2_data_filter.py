@@ -147,13 +147,13 @@ print(training_data)
 #
 # plt.show()
 
-# #correlation matrix
-# corrmat = training_data.corr()
-# f, ax = plt.subplots(figsize=(12, 9))
-# sns.heatmap(corrmat, vmax=.8, square=True);
-# plt.xticks(rotation=90)
-# plt.yticks(rotation=-180)
-# plt.show()
+#correlation matrix
+corrmat = training_data.corr()
+f, ax = plt.subplots(figsize=(12, 9))
+sns.heatmap(corrmat, vmax=.8, square=True);
+plt.xticks(rotation=90)
+plt.yticks(rotation=180)
+plt.show()
 
 
 #save data to pickle file
