@@ -8,6 +8,7 @@ import pandas as pd
 import datetime as dt
 import seaborn as sns
 from pandas import DataFrame
+from pandas.plotting import scatter_matrix
 from datetime import datetime
 import numpy
 

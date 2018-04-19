@@ -151,8 +151,8 @@ print(training_data)
 corrmat = training_data.corr()
 f, ax = plt.subplots(figsize=(12, 9))
 sns.heatmap(corrmat, vmax=.8, square=True);
-plt.xticks(rotation=90)
-plt.yticks(rotation=180)
+plt.xticks(rotation='vertical')
+plt.yticks(rotation='horizontal')
 plt.show()
 
 
