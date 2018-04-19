@@ -70,4 +70,15 @@ for id in id_person:
 train_set = shuffle(train_set)
 training_set, testing_set = train_test_split(train_set, test_size=0.2)
 
-print(training_set)
+array = train_set.values
+
+X = array[:,0:19]
+Y = array[:,19]
+np.delete(X, 0, [15])
+print tabulate(X, tablefmt="plain")
+
+pca = PCA(n_components=3)
+fit = pca.fit(X)
+
+# print("Explained Variance: %s") % fit.explained_variance_ratio_
+# print(fit.components_)
