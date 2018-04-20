@@ -120,7 +120,6 @@ for serie in total_series:
     training_data = pd.concat([training_data, df_person])
 
 
-print(training_data)
 for ser in total_series:
     if ser[1][2] < 8:
         df_person = help_func.create_person_df(data_all, serie[0], variables)
@@ -151,6 +150,7 @@ for ser in total_series:
 # plt.xticks(rotation='vertical')
 # plt.yticks(rotation='horizontal')
 # plt.show()
-#
-# #save data to pickle file
-# training_data.to_pickle('train_set.pkl')
+
+
+#save data to pickle file
+training_data.to_pickle('train_set.pkl')
