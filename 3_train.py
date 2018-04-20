@@ -82,19 +82,37 @@ X = array[:,0:75]
 X[np.argwhere(np.isnan(X))] = 0
 Y = array[:,75]
 
+from sklearn.datasets import make_friedman1
+from sklearn.feature_selection import RFECV
 from sklearn.metrics import mean_squared_error
 from sklearn.svm import SVR
-import numpy as np
 
-array = testing_set.values
-X_test = array[:,0:75]
-X_test[np.argwhere(np.isnan(X))] = 0
-Y_test = array[:,75]
+pca = PCA(n_components=25)
+features = pca.fit_transform(X)
+features_analyse = pca.fit(X)
+print(np.shape(features))
 
-svr = SVR(C=1.0, epsilon=0.2)
-svr.fit(X, Y)
+X = np.concatenate((X,features),axis=1)
 
-print(mean_squared_error(svr.predict(X_test), Y_test))
+estimator = SVR(kernel="linear")
+selector = RFECV(estimator, step=1, cv=3, verbose =1)
+selector = selector.fit(X, Y)
+
+print('Optimal number of features :', selector.n_features_)
+print('Best features :', selector.support_)
+
+from sklearn.externals import joblib
+joblib.dump(selector, 'selector.pkl')
+
+# array = testing_set.values
+# X_test = array[:,0:75]
+# X_test[np.argwhere(np.isnan(X))] = 0
+# Y_test = array[:,75]
+#
+# svr = SVR(C=1.0, epsilon=0.2)
+# svr.fit(X, Y)
+#
+# print(mean_squared_error(svr.predict(X_test), Y_test))
 
 
 
