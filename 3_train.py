@@ -11,13 +11,18 @@ from pandas import DataFrame
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from datetime import datetime
+from tabulate import tabulate
 import numpy
 
 from sklearn import preprocessing
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.decomposition import PCA
+from sklearn.feature_selection import RFECV
+from sklearn.ensemble import RandomForestClassifier
 
 
 data_all = pd.read_pickle('train_set.pkl')
@@ -67,18 +72,60 @@ for id in id_person:
 
     train_set = train_set.append(train_ord, ignore_index=True)
 
+
+
 train_set = shuffle(train_set)
 training_set, testing_set = train_test_split(train_set, test_size=0.2)
 
 array = train_set.values
+X = array[:,0:75]
+X[np.argwhere(np.isnan(X))] = 0
+Y = array[:,75]
 
-X = array[:,0:19]
-Y = array[:,19]
-# np.delete(X, 0, [15])
-print(tabulate(X, tablefmt="plain"))
+from sklearn.metrics import mean_squared_error
+from sklearn.svm import SVR
+import numpy as np
 
-pca = PCA(n_components=3)
-fit = pca.fit(X)
+array = testing_set.values
+X_test = array[:,0:75]
+X_test[np.argwhere(np.isnan(X))] = 0
+Y_test = array[:,75]
 
-# print("Explained Variance: %s") % fit.explained_variance_ratio_
+svr = SVR(C=1.0, epsilon=0.2)
+svr.fit(X, Y)
+
+print(mean_squared_error(svr.predict(X_test), Y_test))
+
+
+
+# # The "accuracy" scoring is proportional to the number of correct classifications
+# clf_rf_4 = RandomForestClassifier()
+# rfecv = RFECV(estimator=clf_rf_4, step=1, cv=5, scoring='accuracy')   #5-fold cross-validation
+# rfecv = rfecv.fit(X, Y)
+#
+# print('Optimal number of features :', rfecv.n_features_)
+# print('Best features :', x_train.columns[rfecv.support_])
+#
+#
+# # feature extraction
+# model = LinearRegression()
+# rfe = RFE(model, 35)
+# fit = rfe.fit(X, Y)
+#
+# print(fit.n_features_)
+# print(fit.support_)
+# rank = fit.ranking_.reshape((15, 5),order='F')
+# names = training_set.columns.values.tolist()
+#
+# for i in range(15):
+#     print(names[i],rank[i,:])
+
+# for i in range(len(rank)):
+#     print(rank[i],names[i])
+
+#
+# pca = PCA(n_components=8)
+# fit = pca.fit(X)
+#
+# print(fit.explained_variance_ratio_)
 # print(fit.components_)

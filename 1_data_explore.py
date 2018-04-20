@@ -37,7 +37,7 @@ id_person = data_all['id'].unique().tolist()
 outlier_variables = [variables[i] for i in [4,7,8,9,12,14,15]]
 for var in outlier_variables:
     df = data_all.loc[data_all.variable == var]
-    df = df[df.value-df.value.mean()>(6*df.value.std())]
+    df = df[df.value-df.value.mean()>(4*df.value.std())]
     data_all = data_all.drop(df.index.values)
 
 #remove values smaller than zero from selected variables

@@ -108,22 +108,10 @@ for id in id_person:
     for s in series:
         total_series.append([id, s])
 
-#retrieve first serie
-serie_use = total_series[0][1]
-df_person = help_func.create_person_df(data_all, id_person[0], variables)
-df_person = df_person.loc[range(serie_use[0],serie_use[1],1)]
-df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
-df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
 
-#make first serie training data
-df_person['id'] = id_person[0]
-training_data = df_person
+training_data = pd.DataFrame(columns=variables) # columns are the variable names
 
-#append rest of the series
 for serie in total_series:
-    if serie == serie_use:
-        print("skip eerste")
-        break
     df_person = help_func.create_person_df(data_all, serie[0], variables)
     df_person = df_person.loc[range(serie[1][0],serie[1][1],1)]
     df_person[variables[0:3]] = df_person[variables[0:3]].interpolate()
@@ -131,7 +119,14 @@ for serie in total_series:
     df_person['id'] = serie[0]
     training_data = pd.concat([training_data, df_person])
 
+
 print(training_data)
+for ser in total_series:
+    if ser[1][2] < 8:
+        df_person = help_func.create_person_df(data_all, serie[0], variables)
+        df_person = df_person.loc[range(serie[1][0],serie[1][1],1)]
+        print(df_person)
+
 
 # #for subplots
 # fig, axes = plt.subplots(4,5, sharey=True )
@@ -149,13 +144,13 @@ print(training_data)
 #
 # plt.show()
 
-#correlation matrix
-corrmat = training_data.corr()
-f, ax = plt.subplots(figsize=(12, 9))
-sns.heatmap(corrmat, vmax=.8, square=True);
-plt.xticks(rotation='vertical')
-plt.yticks(rotation='horizontal')
-plt.show()
-
-#save data to pickle file
-training_data.to_pickle('train_set.pkl')
+# #correlation matrix
+# corrmat = training_data.corr()
+# f, ax = plt.subplots(figsize=(12, 9))
+# sns.heatmap(corrmat, vmax=.8, square=True);
+# plt.xticks(rotation='vertical')
+# plt.yticks(rotation='horizontal')
+# plt.show()
+#
+# #save data to pickle file
+# training_data.to_pickle('train_set.pkl')
