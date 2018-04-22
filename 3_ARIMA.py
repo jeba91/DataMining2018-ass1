@@ -9,7 +9,6 @@ import datetime as dt
 import seaborn as sns
 from pandas import DataFrame
 from statsmodels.tsa.arima_model import ARIMA
-# from statsmodels.tsa.stattools import acf, pacf
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 from datetime import datetime
@@ -45,17 +44,13 @@ data_test['ordinal'] = data_test.index.values
 # get a list of unique ID's
 id_person = data_train['id'].unique().tolist()
 
-# # sort the dataframe by variables
-# data_train.sort_values(by=['id'])
-# data_train.set_index(keys=['id'], drop=False, inplace=True)
-# data_test.sort_values(by=['id'])
-# data_test.set_index(keys=['id'], drop=False, inplace=True)
-
+#Get only n columns
 train_set = data_train[['id','ordinal','mood']]
 test_set = data_test[['id','ordinal','mood']]
 
 print(train_set)
 
+#Get autocorrelation_plot for every ID
 for id in id_person:
 	fig = plt.figure()
 	train_id = train_set.loc[train_set['id'] == id]
@@ -80,61 +75,44 @@ for id in id_person:
 	plt.tight_layout()
 	plt.savefig('acfpacf/' + id + '.png')
 
-
+#Set different values for different ID's
+norm = 2
+p = [norm for i in range(len(id_person))]
+p[3]  = 4
+p[12] = 3
+p[16] = 3
+p[23] = 1
 
 from sklearn.metrics import mean_squared_error
 
+total_mse = 0
+
+#Train ARIMA on every person and get results
 for id in id_person:
-	fig = plt.figure()
+	p_id = p[id_person.index(id)]
 	train_id = train_set.loc[train_set['id'] == id]
-	test_id =  test_set.loc[train_set['id'] == id]
+	test_id =  test_set.loc[test_set['id'] == id]
 	train = train_id['mood'].values.tolist()
-	X = 
-	size = int(len(X) * 0.66)
-	train, test = X[0:size], X[size:len(X)]
-	history = [x for x in train]
+	test = test_id['mood'].values.tolist()
 	predictions = list()
+	history = [x for x in train]
 	for t in range(len(test)):
-		model = ARIMA(history, order=(1,1,0))
+		model = ARIMA(history, order=(p_id,1,0))
 		model_fit = model.fit(disp=0)
-		output = model_fit.forecast()
-		yhat = output[0]
+		fore = model_fit.forecast()
+		yhat = fore[0][0]
+		obs  = test[t]
 		predictions.append(yhat)
-		obs = test[t]
 		history.append(obs)
-		print('predicted=%f, expected=%f' % (yhat, obs))
+		# print('predicted=%f, expected=%f' % (yhat, obs))
 	error = mean_squared_error(test, predictions)
-	print('Test MSE: %.3f' % error)
+	total_mse += error
+	print(id, 'Test MSE: %.3f' % error)
 	# plot
-	pyplot.plot(test)
-	pyplot.plot(predictions, color='red')
-	pyplot.savefig('arima/' + id + '.png')
+	plt.figure()
+	plt.plot(test)
+	plt.plot(predictions, color='red')
+	plt.savefig('arima/' + id + '.png')
 
-# X = data_id['mood']
-# Y = range(len(data_id['mood']))
-#
-# plt.plot(Y, X)
-# plt.ylabel('Mood')
-# plt.show()
-#
-# lag_plot(np.log(data_id['mood']))
-# plt.show()
-#
-# autocorrelation_plot(np.log(data_id['mood']))
-# pyplot.show()
 
-#
-# # fit model
-# model = ARIMA(np.log(data_id['mood']), order=(7, 1, 0))
-# model_fit = model.fit(disp=0)
-# print(model_fit.summary())
-
-# #plot residual errors
-# residuals = DataFrame(model_fit.resid)
-# residuals.plot()
-# pyplot.show()
-# residuals.plot(kind='kde')
-# pyplot.show()
-# print(residuals.describe())
-# pyplot.show()
-# print(data_id)
+print('mean', total_mse/len(id_person))

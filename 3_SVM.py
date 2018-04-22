@@ -28,12 +28,14 @@ from sklearn.feature_selection import RFECV
 from sklearn.metrics import mean_squared_error
 from sklearn.svm import SVR
 from sklearn.ensemble import ExtraTreesRegressor
+import pandas as pd
+from sklearn import preprocessing
 
 data_train = pd.read_pickle('filtered_data_train.pkl')
 data_test = pd.read_pickle('filtered_data_test.pkl')
 
 class helper_functions:
-    #Scatterplot function
+    #function to create training set for SVM
     def dataset_series(self, dataset):
         #Create new variable of call/sms combined
         dataset['call/sms'] = dataset['call'] + dataset['sms']
@@ -86,6 +88,7 @@ class helper_functions:
                             week.extend(data_p[0][1:-1])
                             week.extend([data_p[0][-1]])
                         else:
+                            data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
                             week.extend([data_p[0][-1]])
                     set_serie.append(week)
 
@@ -93,68 +96,89 @@ class helper_functions:
 
         return set
 
+#Get training set
 help_func = helper_functions()
 train_set = shuffle(help_func.dataset_series(data_train))
 
-
 array_train = train_set.values
 X_train = array_train[:,:-1]
-# X[np.argwhere(np.isnan(X))] = 0
 Y_train = array_train[:,-1]
 
+
+#UNCOMMENT FOR PCA ANALYSIS
 # pca = PCA().fit(train_set.values)
 # plt.plot(np.cumsum(pca.explained_variance_ratio_))
 # plt.xlabel('number of components')
 # plt.ylabel('cumulative explained variance');
 # plt.savefig('visualize/PCA.png')
 
+
+
+#Get PCA number of components and add to training
 pca = PCA(n_components=14)
 features = pca.fit_transform(X_train)
 features_analyse = pca.fit(X_train)
-
 X_train = np.concatenate((X_train,features),axis=1)
 
+
+
+##UNCOMMENT FOR TREE
 # # Build a forest and compute the feature importances
-# forest = ExtraTreesRegressor(n_estimators=250,
-#                               random_state=0)
-#
-# forest.fit(X, Y)
+# forest = ExtraTreesRegressor(n_estimators=250, random_state=0)
+# forest.fit(X_train, Y_train)
 #
 # importances = forest.feature_importances_
-# std = np.std([tree.feature_importances_ for tree in forest.estimators_],
-#              axis=0)
+# print(importances)
+# std = np.std([tree.feature_importances_ for tree in forest.estimators_], axis=0)
 # indices = np.argsort(importances)[::-1]
 #
 # # Print the feature ranking
 # print("Feature ranking:")
 #
-# for f in range(X.shape[1]):
-#     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
+# total = 0
+#
+# for f in range(X_train.shape[1]):
+#     total = total + importances[indices[f]]
+#     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]), total)
 #
 # # Plot the feature importances of the forest
 # plt.figure()
 # plt.title("Feature importances")
-# plt.bar(range(X.shape[1]), importances[indices],
-#        color="r", yerr=std[indices], align="center")
-# plt.xticks(range(X.shape[1]), indices)
-# plt.xlim([-1, X.shape[1]])
+# plt.bar(range(X_train.shape[1]), importances[indices], color="r", yerr=std[indices], align="center")
+# plt.xticks(range(X_train.shape[1]), indices)
+# plt.xticks(rotation='vertical')
+# plt.xlim([-1, X_train.shape[1]])
 # plt.show()
+# plt.savefig('visualize/tree_importance.png')
 
 
-# estimator = SVR(kernel="rbf")
-# selector = RFECV(estimator, step=1, cv=3, verbose=1, scoring='neg_mean_squared_error')
-# selector = selector.fit(X, Y)
+
+#Get chosen indexes from tree
+indexes =  [44,35,17,8,41,29,40,26]
+X_train1 = X_train[:,[indexes[0]]]
+for i in range(1,len(indexes)):
+    X_train2 = X_train[:,[indexes[i]]]
+    X_train1 = np.concatenate((X_train1,X_train2),1)
 
 
-from sklearn.externals import joblib
+
+##UNCOMMENT FOR RFECV
+# print(X_train)
+# print(Y_train)
+#
+# estimator = SVR(kernel = 'linear', max_iter=500000)
+# selector = RFECV(estimator, step=1, cv=3, scoring='neg_mean_squared_error')
+# selector = selector.fit(X_train, Y_train)
+#
+# from sklearn.externals import joblib
 # joblib.dump(selector, 'selector.pkl')
-
-selector = joblib.load('selector.pkl')
-print('Optimal number of features :', selector.n_features_)
-print('Best features :', selector.support_)
-
-indexes = [i for i, x in enumerate(selector.support_) if x]
-
+#
+# selector = joblib.load('selector.pkl')
+# print('Optimal number of features :', selector.n_features_)
+# print('Best features :', selector.support_)
+#
+# indexes = [i for i, x in enumerate(selector.support_) if x]
+#
 # plt.figure()
 # plt.xlabel("Number of features selected")
 # plt.ylabel("Cross validation score (min value of MSE)")
@@ -162,19 +186,13 @@ indexes = [i for i, x in enumerate(selector.support_) if x]
 # plt.show()
 
 
-X_train1 = X_train[:,[indexes[0]]]
-X_train2 = X_train[:,[indexes[1]]]
-X_train3 = X_train[:,[indexes[2]]]
 
-
-X_train = np.concatenate((X_train1,X_train2),1)
-X_train = np.concatenate((X_train,X_train3),1)
-
+#UNCOMMENT FOR HYPER SEARCH
 # kernel =  ['linear', 'poly', 'rbf', 'sigmoid']
 #
-# split_vali = round(0.8 * X_train.shape[0])
-# X_train_v = X_train[:split_vali,:]
-# X_vali = X_train[split_vali:,:]
+# split_vali = round(0.8 * X_train1.shape[0])
+# X_train_v = X_train1[:split_vali,:]
+# X_vali = X_train1[split_vali:,:]
 # Y_train_v = Y_train[:split_vali]
 # Y_vali = Y_train[split_vali:]
 #
@@ -184,28 +202,34 @@ X_train = np.concatenate((X_train,X_train3),1)
 #     mse = mean_squared_error(svr.predict(X_vali), Y_vali)
 #     print(k, round(mse,5))
 
-svr = SVR(kernel = 'linear')
-svr.fit(X_train, Y_train)
+
+
+#create a SVR
+svr = SVR(kernel = 'linear', verbose = True, max_iter=10000)
+svr.fit(X_train1, Y_train)
 
 # get a list of unique ID's
 id_person = data_train['id'].unique().tolist()
-
 scores = []
 
+total_mse = 0
+
+#test SVR on every ID
 for id in id_person:
     test_set  = shuffle(help_func.dataset_series(data_test.loc[data_test['id'] == id]))
-    array_test = test_set.values
-    X_test = array_test[:,:-1]
-    # X[np.argwhere(np.isnan(X))] = 0
-    Y_test = array_test[:,-1]
-
+    test_array = test_set.values
+    features = pca.fit_transform(test_array)
+    X_test = np.concatenate((test_array,features),axis=1)
     X_test1 = X_test[:,[indexes[0]]]
-    X_test2 = X_test[:,[indexes[1]]]
-    X_test3 = X_test[:,[indexes[2]]]
-    X_test = np.concatenate((X_test1, X_test2),1)
-    X_test = np.concatenate((X_test, X_test3),1)
-    mse = mean_squared_error(svr.predict(X_test), Y_test)
+    for i in range(1,len(indexes)):
+        X_test2 = X_test[:,[indexes[i]]]
+        X_test1 = np.concatenate((X_test1,X_test2),1)
+    Y_test = test_array[:,-1]
+    mse = mean_squared_error(svr.predict(X_test1), Y_test)
+    total_mse += mse
     scores.append([id,mse])
 
+#print MSE scores
 for s in scores:
     print(s[0],round(s[1],5))
+print('mean', total_mse/len(id_person))
