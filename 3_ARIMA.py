@@ -34,7 +34,7 @@ import pandas
 import pandas as pd
 
 #Load in filtered data
-data_all = pd.read_pickle('filtered_data.pkl')
+data_all = pd.read_pickle('filtered_data_train.pkl')
 
 #Create new variable of call/sms combined
 data_all['call/sms'] = data_all['call'] + data_all['sms']
@@ -126,4 +126,4 @@ print('Test MSE: %.3f' % error)
 # plot
 pyplot.plot(test)
 pyplot.plot(predictions, color='red')
-pyplot.show()
+pyplot.savefig('ding')

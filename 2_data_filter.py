@@ -210,10 +210,9 @@ test_filtered_data  = pd.DataFrame(columns=variables)
 for id in id_person:
     #Get dataframe of one ID
     df_person = filtered_data.loc[filtered_data['id'] == id]
-    a = a+df_person.shape[0]
     split = round(0.7 * df_person.shape[0])
-    train_filtered_data = train_filtered_data.append(df_person.iloc[:,:split], ignore_index=True)
-    test_filtered_data = test_filtered_data.append(df_person.iloc[:,split:], ignore_index=True)
+    train_filtered_data = train_filtered_data.append(df_person.iloc[:split,:], ignore_index=True)
+    test_filtered_data = test_filtered_data.append(df_person.iloc[split:,:], ignore_index=True)
 
 #visualize data
 vis_func.scatterplot(filtered_data,variables)

@@ -29,71 +29,83 @@ from sklearn.metrics import mean_squared_error
 from sklearn.svm import SVR
 from sklearn.ensemble import ExtraTreesRegressor
 
-#Load in filtered data
-data_all = pd.read_pickle('filtered_data_train.pkl')
+data_train = pd.read_pickle('filtered_data_train.pkl')
+data_test = pd.read_pickle('filtered_data_test.pkl')
 
-#Create new variable of call/sms combined
-data_all['call/sms'] = data_all['call'] + data_all['sms']
-data_all.pop('call')
-data_all.pop('sms')
+class helper_functions:
+    #Scatterplot function
+    def dataset_series(self, dataset):
+        #Create new variable of call/sms combined
+        dataset['call/sms'] = dataset['call'] + dataset['sms']
+        dataset.pop('call')
+        dataset.pop('sms')
 
-#Add ordinal dates
-data_all['ordinal'] = data_all.index.values
+        #Add ordinal dates
+        dataset['ordinal'] = dataset.index.values
 
-# get a list of unique ID's
-id_person = data_all['id'].unique().tolist()
+        # get a list of unique ID's
+        id_person = dataset['id'].unique().tolist()
 
-# sort the dataframe by variables
-data_all.sort_values(by=['id'])
-# set the index to be this and don't drop
-data_all.set_index(keys=['id'], drop=False, inplace=True)
+        # sort the dataframe by ID
+        dataset.sort_values(by=['id'])
+        dataset.set_index(keys=['id'], drop=False, inplace=True)
 
+        #create names list for new dataframe
+        total_names = []
+        names = dataset.columns.values.tolist()
+        names.append(names.pop(names.index('mood')))
+        names.pop(names.index('id'))
+        names.pop(names.index('ordinal'))
+        for i in range(5):
+            total_names.extend(names[0:-1])
+            total_names.extend([names[-1]])
+        total_names.extend(['mood_predict'])
+        names.insert(0, 'ordinal')
 
-names = data_all.columns.values.tolist()
-names.append(names.pop(names.index('mood')))
-names.pop(names.index('id'))
-names.pop(names.index('ordinal'))
+        #create new dataframe for data
+        set = pd.DataFrame(columns=total_names) # columns are the variable names
 
-total_names = []
-for i in range(5):
-    total_names.extend(names[0:-1])
-    total_names.extend([names[-1]])
-total_names.extend(['mood_predict'])
+        for id in id_person:
+            #Get data from 1 ID
+            data_id = dataset.loc[dataset['id'] == id]
+            data_id = data_id[names]
+            #Get a list with unique sorted ordinal dates
+            ordinal = sorted(data_id['ordinal'].unique().tolist())
+            #create new list for serie
+            set_serie = []
 
-names.insert(0, 'ordinal')
+            for j in ordinal:
+                days = [5,4,3,2,1,0]
+                past = [j-i for i in days]
+                past_in_ordinal = [x for x in past if x in ordinal]
+                if len(past_in_ordinal) == 6:
+                    week = []
+                    for p in past:
+                        if p != past[-1]:
+                            data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
+                            week.extend(data_p[0][1:-1])
+                            week.extend([data_p[0][-1]])
+                        else:
+                            week.extend([data_p[0][-1]])
+                    set_serie.append(week)
 
-train_set = pd.DataFrame(columns=total_names) # columns are the variable names
+            set = set.append(pd.DataFrame(np.array(set_serie),columns=total_names), ignore_index=True)
 
+        return set
 
-for id in id_person:
-    #Get data from 1 ID
-    data_id = data_all.loc[data_all['id'] == id]
-    data_id = data_id[names]
-    #Get a list with unique sorted ordinal dates
-    ordinal = sorted(data_id['ordinal'].unique().tolist())
+help_func = helper_functions()
+train_set = shuffle(help_func.dataset_series(data_train))
+test_set  = shuffle(help_func.dataset_series(data_test))
 
-    train_set_week = []
+array_train = train_set.values
+X_train = array_train[:,:-1]
+# X[np.argwhere(np.isnan(X))] = 0
+Y_train = array_train[:,-1]
 
-    for j in ordinal:
-        days = [5,4,3,2,1,0]
-        past = [j-i for i in days]
-        past_in_ordinal = [x for x in past if x in ordinal]
-        if len(past_in_ordinal) == 6:
-            week = []
-            for p in past:
-                if p != past[-1]:
-                    data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
-                    week.extend(data_p[0][1:-1])
-                    week.extend([data_p[0][-1]])
-                else:
-                    week.extend([data_p[0][-1]])
-            train_set_week.append(week)
-
-    train_ord = pd.DataFrame(np.array(train_set_week),
-                             columns=total_names) # columns are the variable names
-
-    train_set = train_set.append(train_ord, ignore_index=True)
-
+array_test = test_set.values
+X_test = array_test[:,:-1]
+# X[np.argwhere(np.isnan(X))] = 0
+Y_test = array_test[:,-1]
 
 # pca = PCA().fit(train_set.values)
 # plt.plot(np.cumsum(pca.explained_variance_ratio_))
@@ -101,22 +113,11 @@ for id in id_person:
 # plt.ylabel('cumulative explained variance');
 # plt.savefig('visualize/PCA.png')
 
-train_set = shuffle(train_set)
-# training_set, testing_set = train_test_split(train_set, test_size=0.2)
-
-array = train_set.values
-X = array[:,:-1]
-# X[np.argwhere(np.isnan(X))] = 0
-Y = array[:,-1]
-
-print(X)
-print(Y)
-
 pca = PCA(n_components=14)
-features = pca.fit_transform(X)
-features_analyse = pca.fit(X)
+features = pca.fit_transform(X_train)
+features_analyse = pca.fit(X_train)
 
-X = np.concatenate((X,features),axis=1)
+X_train = np.concatenate((X_train,features),axis=1)
 
 # # Build a forest and compute the feature importances
 # forest = ExtraTreesRegressor(n_estimators=250,
@@ -148,24 +149,16 @@ X = np.concatenate((X,features),axis=1)
 # estimator = SVR(kernel="rbf")
 # selector = RFECV(estimator, step=1, cv=3, verbose=1, scoring='neg_mean_squared_error')
 # selector = selector.fit(X, Y)
-#
 
-#
+
 from sklearn.externals import joblib
 # joblib.dump(selector, 'selector.pkl')
 
 selector = joblib.load('selector.pkl')
 print('Optimal number of features :', selector.n_features_)
 print('Best features :', selector.support_)
-print(selector.grid_scores_)
-
-print(len(selector.support_))
-print(len(total_names))
 
 indexes = [i for i, x in enumerate(selector.support_) if x]
-
-print([total_names[i] for i in indexes])
-
 
 # plt.figure()
 # plt.xlabel("Number of features selected")
@@ -173,17 +166,26 @@ print([total_names[i] for i in indexes])
 # plt.plot(range(1, len(selector.grid_scores_) + 1), selector.grid_scores_)
 # plt.show()
 
-X = [X[i] for i in indexes]
-Y = [Y[i] for i in indexes]
 
-# #TRAIN SVM
-# array = train_set.values
-# X_test = array[:,indexes]
-# # X_test[np.argwhere(np.isnan(X))] = 0
-# Y_test = array[:,-1]
+X_train1 = X_train[:,[indexes[0]]]
+X_test1 = X_test[:,[indexes[0]]]
+
+X_train2 = X_train[:,[indexes[1]]]
+X_test2 = X_test[:,[indexes[1]]]
+
+X_train3 = X_train[:,[indexes[2]]]
+X_test3 = X_test[:,[indexes[2]]]
+
+X_train = np.concatenate((X_train1,X_train2))
+X_test = np.concatenate((X_test1, X_test2))
+
+X_train = np.concatenate((X_train,X_train3))
+X_test = np.concatenate((X_test, X_test3))
+
 
 svr = SVR(C=1.0, epsilon=0.2)
 
-svr.fit(X, Y)
+svr.fit(X_train1, Y_train)
 
-print(mean_squared_error(svr.predict(X), Y))
+print('MSE')
+print(mean_squared_error(svr.predict(X_test1), Y_test))
