@@ -101,16 +101,18 @@ class visualize_functions:
     #Scatterplot function
     def scatterplot(self, dataset, variables):
         #for subplots
-        fig, axes = plt.subplots(4,4, sharey=True )
+        fig, axes = plt.subplots(3,3, sharey=True )
         a = 0
         b = 0
 
         #scatter plot totalbsmtsf/saleprice
         for var in variables:
+            if var == 'mood':
+                break
             data = pd.concat([dataset['mood'], dataset[var]], axis=1)
             data.plot.scatter(ax=axes[a,b], x=var, y='mood'); axes[a,b].set_title(var)
             a = a+1
-            if a == 4:
+            if a == 3:
                 b = b+1
                 a = 0
 
@@ -178,6 +180,9 @@ for id in id_person:
 
 #Create new dataframe for filtered data
 filtered_data = pd.DataFrame(columns=variables)
+
+#remove small series
+total_series = [x for x in total_series if x[1][2] > 15]
 
 #Loop through all series and extract data of serie
 for serie in total_series:

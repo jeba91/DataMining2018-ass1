@@ -46,46 +46,14 @@ data_all.sort_values(by=['id'])
 # set the index to be this and don't drop
 data_all.set_index(keys=['id'], drop=False, inplace=True)
 
+train_set = data_all[['id','ordinal','mood']]
 
-names = ['ordinal','mood']
+train_set = train_set.groupby("id")
 
-total_names = []
-for i in range(5):
-    total_names.extend(names)
-total_names.extend(['ordinal','mood_predict'])
+for product, product_df in train_set:
+    print(product)
+    print(product_df)
 
-train_set = pd.DataFrame(columns=total_names) # columns are the variable names
-
-for id in id_person:
-    #Get data from 1 ID
-    data_id = data_all.loc[data_all['id'] == id]
-    data_id = data_id[names]
-
-    #Get a list with unique sorted ordinal dates
-    ordinal = sorted(data_id['ordinal'].unique().tolist())
-
-    train_set_week = []
-
-    for j in ordinal:
-        days = [5,4,3,2,1,0]
-        past = [j-i for i in days]
-        past_in_ordinal = [x for x in past if x in ordinal]
-        if len(past_in_ordinal) == 6:
-            week = []
-            for p in past:
-                if p != past[-1]:
-                    data_p = data_id.loc[data_id['ordinal'] == p].values.tolist()
-                    week.extend(data_p[0])
-                else:
-                    week.extend(data_p[0])
-            train_set_week.append(week)
-
-    train_ord = pd.DataFrame(np.array(train_set_week),
-                             columns=total_names) # columns are the variable names
-
-    train_set = train_set.append(train_ord, ignore_index=True)
-
-print(train_set)
 
 # train_set = shuffle(train_set)
 # training_set, testing_set = train_test_split(train_set, test_size=0.2)
