@@ -17,6 +17,9 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 from sklearn.feature_selection import RFE
 from sklearn.linear_model import LogisticRegression
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+
 
 # Functions for data analysis and data cleaning/interpolation
 class helper_functions:
@@ -158,9 +161,10 @@ variables = data_all['variable'].unique().tolist()
 # get the variables selected for analysis
 variables = [variables[i] for i in [0,1,2,3,4,5,6,8,9,10,11,12,14,15,18]]
 
+#Find sparse variables
+(data_all == 0).astype(int).sum(axis=0)
 #Remove sparse variables
 variables = [variables[i] for i in [0,1,2,3,4,5,6,7,8,12]]
-
 
 # get a list of unique ID's
 id_person = data_all['id'].unique().tolist()
@@ -196,9 +200,20 @@ for serie in total_series:
     df_person[variables[3:]] = df_person[variables[3:]].fillna(0)
     #add column with ID to data
     df_person['id'] = serie[0]
-    #Concat total filtered data with person fitlered data
+    #Concat total filtered data with person filtered data
     filtered_data = pd.concat([filtered_data, df_person])
 
+train_filtered_data = pd.DataFrame(columns=variables)
+test_filtered_data  = pd.DataFrame(columns=variables)
+
+#create series from each ID and total list
+for id in id_person:
+    #Get dataframe of one ID
+    df_person = filtered_data.loc[filtered_data['id'] == id]
+    a = a+df_person.shape[0]
+    split = round(0.7 * df_person.shape[0])
+    train_filtered_data = train_filtered_data.append(df_person.iloc[:,:split], ignore_index=True)
+    test_filtered_data = test_filtered_data.append(df_person.iloc[:,split:], ignore_index=True)
 
 #visualize data
 vis_func.scatterplot(filtered_data,variables)
@@ -206,4 +221,5 @@ vis_func.QQplot(filtered_data,variables)
 vis_func.heatmap_corr(filtered_data)
 
 #save data to pickle file
-filtered_data.to_pickle('filtered_data.pkl')
+train_filtered_data.to_pickle('filtered_data_train.pkl')
+test_filtered_data.to_pickle('filtered_data_test.pkl')
