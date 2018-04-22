@@ -95,17 +95,12 @@ class helper_functions:
 
 help_func = helper_functions()
 train_set = shuffle(help_func.dataset_series(data_train))
-test_set  = shuffle(help_func.dataset_series(data_test))
+
 
 array_train = train_set.values
 X_train = array_train[:,:-1]
 # X[np.argwhere(np.isnan(X))] = 0
 Y_train = array_train[:,-1]
-
-array_test = test_set.values
-X_test = array_test[:,:-1]
-# X[np.argwhere(np.isnan(X))] = 0
-Y_test = array_test[:,-1]
 
 # pca = PCA().fit(train_set.values)
 # plt.plot(np.cumsum(pca.explained_variance_ratio_))
@@ -168,24 +163,49 @@ indexes = [i for i, x in enumerate(selector.support_) if x]
 
 
 X_train1 = X_train[:,[indexes[0]]]
-X_test1 = X_test[:,[indexes[0]]]
-
 X_train2 = X_train[:,[indexes[1]]]
-X_test2 = X_test[:,[indexes[1]]]
-
 X_train3 = X_train[:,[indexes[2]]]
-X_test3 = X_test[:,[indexes[2]]]
-
-X_train = np.concatenate((X_train1,X_train2))
-X_test = np.concatenate((X_test1, X_test2))
-
-X_train = np.concatenate((X_train,X_train3))
-X_test = np.concatenate((X_test, X_test3))
 
 
-svr = SVR(C=1.0, epsilon=0.2)
+X_train = np.concatenate((X_train1,X_train2),1)
+X_train = np.concatenate((X_train,X_train3),1)
 
-svr.fit(X_train1, Y_train)
+# kernel =  ['linear', 'poly', 'rbf', 'sigmoid']
+#
+# split_vali = round(0.8 * X_train.shape[0])
+# X_train_v = X_train[:split_vali,:]
+# X_vali = X_train[split_vali:,:]
+# Y_train_v = Y_train[:split_vali]
+# Y_vali = Y_train[split_vali:]
+#
+# for k in kernel:
+#     svr = SVR(kernel = k)
+#     svr.fit(X_train_v, Y_train_v)
+#     mse = mean_squared_error(svr.predict(X_vali), Y_vali)
+#     print(k, round(mse,5))
 
-print('MSE')
-print(mean_squared_error(svr.predict(X_test1), Y_test))
+svr = SVR(kernel = 'linear')
+svr.fit(X_train, Y_train)
+
+# get a list of unique ID's
+id_person = data_train['id'].unique().tolist()
+
+scores = []
+
+for id in id_person:
+    test_set  = shuffle(help_func.dataset_series(data_test.loc[data_test['id'] == id]))
+    array_test = test_set.values
+    X_test = array_test[:,:-1]
+    # X[np.argwhere(np.isnan(X))] = 0
+    Y_test = array_test[:,-1]
+
+    X_test1 = X_test[:,[indexes[0]]]
+    X_test2 = X_test[:,[indexes[1]]]
+    X_test3 = X_test[:,[indexes[2]]]
+    X_test = np.concatenate((X_test1, X_test2),1)
+    X_test = np.concatenate((X_test, X_test3),1)
+    mse = mean_squared_error(svr.predict(X_test), Y_test)
+    scores.append([id,mse])
+
+for s in scores:
+    print(s[0],round(s[1],5))
